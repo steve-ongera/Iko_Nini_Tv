@@ -2,14 +2,14 @@ import React from 'react'
 import { PayPalButtons } from '@paypal/react-paypal-js'
 import { paymentsAPI } from '../../services/api'
 
-const PaypalButton = ({ orderId, amount, onSuccess, onError }) => {
+const PaypalButton = ({ orderId, amount, onSuccess, onError: onPaymentError }) => {
   const createOrder = async () => {
     try {
       const response = await paymentsAPI.paypalCreateOrder(orderId)
       return response.data.paypal_order_id
     } catch (error) {
       console.error('Failed to create PayPal order:', error)
-      if (onError) onError('Failed to initialize PayPal payment')
+      if (onPaymentError) onPaymentError('Failed to initialize PayPal payment')
       throw error
     }
   }
@@ -21,17 +21,17 @@ const PaypalButton = ({ orderId, amount, onSuccess, onError }) => {
       if (response.data.status === 'COMPLETED') {
         if (onSuccess) onSuccess()
       } else {
-        if (onError) onError('Payment not completed')
+        if (onPaymentError) onPaymentError('Payment not completed')
       }
     } catch (error) {
       console.error('PayPal capture error:', error)
-      if (onError) onError('Payment failed. Please try again.')
+      if (onPaymentError) onPaymentError('Payment failed. Please try again.')
     }
   }
 
-  const onError = (error) => {
+  const handleError = (error) => {
     console.error('PayPal error:', error)
-    if (onError) onError('PayPal payment error. Please try again.')
+    if (onPaymentError) onPaymentError('PayPal payment error. Please try again.')
   }
 
   return (
@@ -46,7 +46,7 @@ const PaypalButton = ({ orderId, amount, onSuccess, onError }) => {
         <PayPalButtons
           createOrder={createOrder}
           onApprove={onApprove}
-          onError={onError}
+          onError={handleError}
           style={{ layout: 'vertical' }}
         />
       </div>
