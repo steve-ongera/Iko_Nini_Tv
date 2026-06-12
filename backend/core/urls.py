@@ -1,5 +1,5 @@
 """
-store/urls.py
+core/urls.py
 Iko Nini TV — App URL Configuration
 """
 
@@ -7,7 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'store'
+app_name = 'core'
 
 urlpatterns = [
     # Auth

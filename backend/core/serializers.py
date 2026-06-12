@@ -1,5 +1,5 @@
 """
-store/serializers.py
+core/serializers.py
 Iko Nini TV — DRF Serializers
 """
 

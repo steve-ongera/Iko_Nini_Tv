@@ -1,5 +1,5 @@
 """
-store/views.py
+core/views.py
 Iko Nini TV — All API Views
 """
 

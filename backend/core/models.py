@@ -1,5 +1,5 @@
 """
-store/models.py
+core/models.py
 Iko Nini TV — All models for the core store application.
 """
 

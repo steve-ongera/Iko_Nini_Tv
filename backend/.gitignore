@@ -1,0 +1,6 @@
+.env
+media/
+logs/
+db.sqlite3
+
+core/__pychache__/
