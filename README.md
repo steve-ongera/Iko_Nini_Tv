@@ -102,6 +102,7 @@ ikonini-tv/
     └── src/
         ├── main.jsx              # React DOM entry
         ├── App.jsx               # Router + providers
+        |---Styles/ main.css(2500line of code)
         │
         ├── services/
         │   └── api.js            # Axios instance + ALL API calls
