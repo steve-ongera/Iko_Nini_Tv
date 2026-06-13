@@ -1,9 +1,18 @@
 """
 core/management/commands/seed_data.py
-Iko Nini TV — Seed the database with realistic demo data.
+Iko Nini TV — Seed the database with realistic demo data for our
+streetwear/apparel catalogue (hoodies, tees, sweatpants, socks, crop tops).
+
+More product lines will be added later — the category/brand structure
+below is intentionally kept generic so new categories can be appended
+without breaking anything.
 
 Images are pulled randomly from:
-    D:/gadaf/Documents/Mkurugenzi – Merch_files
+    D:/gadaf/Documents/iko_nini_product
+
+Banners specifically use banner_1, banner_2, banner_3 (any extension)
+from that same folder — everything else (brands, categories, products)
+gets a random image from the folder.
 
 Usage:
     python manage.py seed_data
@@ -90,100 +99,104 @@ PICKUP_STATIONS = {
     ],
 }
 
+# ─────────────────────────────────────────────
+#  CATEGORIES, BRANDS & PRODUCTS
+# ─────────────────────────────────────────────
+
+# Top-level catalogue. New ranges (electronics, beauty, etc.) can simply be
+# appended here later — the seeding logic below doesn't assume anything
+# clothing-specific beyond the PRICE_RANGES / SIZE lookups further down.
 CATEGORIES = [
-    ("Electronics", None, [
-        "Smartphones", "Laptops & Computers", "Tablets", "Audio & Headphones",
-        "Cameras", "Smart Watches", "TV & Home Theatre",
-    ]),
-    ("Fashion", None, [
-        "Men's Clothing", "Women's Clothing", "Kids' Clothing",
-        "Shoes & Sneakers", "Bags & Wallets", "Accessories",
-    ]),
-    ("Home & Living", None, [
-        "Kitchen & Dining", "Bedding & Mattresses", "Furniture",
-        "Lighting", "Cleaning Supplies",
-    ]),
-    ("Sports & Fitness", None, [
-        "Gym Equipment", "Sportswear", "Outdoor & Camping",
-    ]),
-    ("Beauty & Health", None, [
-        "Skincare", "Hair Care", "Supplements & Vitamins",
-    ]),
-    ("Baby & Kids", None, [
-        "Toys & Games", "Baby Clothing", "Baby Feeding",
+    ("Apparel", None, [
+        "Hoodies",
+        "T-Shirts",
+        "Sweatpants",
+        "Socks",
+        "Crop Tops - Full",
+        "Crop Tops - Half",
     ]),
 ]
 
 BRANDS = [
-    "Samsung", "Apple", "Infinix", "Tecno", "Itel",
-    "Sony", "LG", "HP", "Dell", "Lenovo",
-    "Nike", "Adidas", "Puma", "Under Armour",
-    "Nivea", "L'Oréal", "Dove", "Neutrogena",
-    "Panasonic", "Hisense", "Ramtons", "Bruhm",
+    "Iko Nini Originals",
+    "Mkurugenzi Merch",
+    "Nairobi Streetwear Co.",
+    "247 Apparel",
+    "Daystar Threads",
+    "Continental Fits",
 ]
 
+# Price ranges (KES) per category — used to randomise each product's price.
+PRICE_RANGES = {
+    "Hoodies": (3500, 4500),
+    "T-Shirts": (1500, 2500),
+    "Sweatpants": (2500, 4000),
+    "Socks": (500, 1200),
+    "Crop Tops - Full": (800, 1500),
+    "Crop Tops - Half": (800, 1500),
+}
+
 PRODUCTS_BY_CATEGORY = {
-    "Smartphones": [
-        ("Samsung Galaxy A55 5G", 45000, 52000),
-        ("Infinix Hot 40 Pro", 18500, 21000),
-        ("Tecno Camon 20 Pro", 22000, 25000),
-        ("iPhone 14 128GB", 120000, 135000),
-        ("Itel A70", 8500, 10000),
+    "Hoodies": [
+        "Oversized Pullover Hoodie",
+        "Classic Crewneck Hoodie",
+        "Zip-Up Hoodie",
+        "Embroidered Logo Hoodie",
+        "Tie-Dye Hoodie",
     ],
-    "Laptops & Computers": [
-        ("HP 15s Intel Core i5", 65000, 72000),
-        ("Lenovo IdeaPad Slim 3", 58000, 65000),
-        ("Dell Inspiron 15 3000", 75000, 83000),
+    "T-Shirts": [
+        "Classic Cotton Tee",
+        "Oversized Graphic Tee",
+        "Ribbed Crew Neck Tee",
+        "Long Sleeve Tee",
+        "Tie-Dye Tee",
     ],
-    "Audio & Headphones": [
-        ("Sony WH-1000XM5 Wireless Headphones", 32000, 38000),
-        ("Samsung Galaxy Buds2 Pro", 18000, 22000),
-        ("JBL Flip 6 Speaker", 12000, 14500),
+    "Sweatpants": [
+        "Jogger Sweatpants",
+        "Relaxed Fit Sweatpants",
+        "Cargo Sweatpants",
+        "Tapered Track Pants",
     ],
-    "Shoes & Sneakers": [
-        ("Nike Air Max 270", 12000, 14000),
-        ("Adidas Ultraboost 23", 15000, 18000),
-        ("Puma RS-X", 8500, 10000),
+    "Socks": [
+        "Crew Socks (3-Pack)",
+        "Ankle Socks (3-Pack)",
+        "Patterned Crew Socks",
+        "No-Show Socks (5-Pack)",
     ],
-    "Kitchen & Dining": [
-        ("Ramtons 2-Slice Toaster", 2500, 3200),
-        ("Bruhm 20L Microwave", 8500, 10000),
-        ("Stainless Steel Cookware Set 5pcs", 4500, 5500),
+    "Crop Tops - Full": [
+        "Ribbed Full Crop Top",
+        "Oversized Full Crop Top",
+        "Graphic Full Crop Top",
     ],
-    "Skincare": [
-        ("Nivea Extra White Body Lotion 400ml", 650, 850),
-        ("Neutrogena Hydro Boost Gel", 1800, 2200),
-        ("L'Oréal Revitalift SPF 30 Cream", 2200, 2600),
-    ],
-    "Gym Equipment": [
-        ("Adjustable Dumbbell Set 20kg", 5500, 6500),
-        ("Resistance Bands Set", 1200, 1500),
-        ("Yoga Mat 6mm Non-Slip", 2000, 2400),
-    ],
-    "Toys & Games": [
-        ("LEGO Classic Bricks 500pcs", 3500, 4200),
-        ("Remote Control Car 2.4GHz", 2800, 3500),
-        ("Kids Wooden Puzzle Set", 1200, 1500),
+    "Crop Tops - Half": [
+        "Fitted Half Crop Top",
+        "Tank Half Crop Top",
+        "Long Sleeve Half Crop Top",
     ],
 }
 
+# Sizing — applied when generating ProductVariant rows.
+CLOTHING_SIZES = ["S", "M", "L", "XL", "XXL"]
+SOCK_SIZES = ["S/M (UK 3-7)", "L/XL (UK 8-12)"]
+COLORS = ["Black", "White", "Grey Melange", "Navy", "Maroon", "Olive Green", "Beige"]
+
 PRODUCT_DESCRIPTIONS = [
-    "Experience premium quality with this top-rated product, trusted by thousands of Kenyan shoppers.",
-    "Built for performance and durability. This item ships across all 47 counties via Iko Nini TV.",
-    "Authentic product with full manufacturer warranty. Available for same-day dispatch in Nairobi.",
-    "A customer favourite. Combines sleek design with superior functionality at an unbeatable price.",
-    "Engineered to last. Get yours today and enjoy free delivery to selected pickup stations countrywide.",
+    "Premium streetwear cut for everyday comfort, trusted by shoppers all over Kenya.",
+    "Soft, durable fabric built to last wash after wash. Ships nationwide via Iko Nini TV.",
+    "A wardrobe staple — relaxed fit, clean finish, and true-to-size sizing.",
+    "Designed in Nairobi for everyday wear. Pairs easily with anything in your closet.",
+    "Heavyweight cotton blend for a premium feel at an unbeatable price. Free delivery to selected pickup stations countrywide.",
 ]
 
 REVIEW_BODIES = [
-    "Very impressed with the quality. Delivery was fast, arrived within 2 days to Mombasa!",
-    "Excellent product, exactly as described. Will definitely order again from Iko Nini TV.",
+    "Fabric quality is excellent, fits true to size. Delivery was fast, arrived within 2 days to Mombasa!",
+    "Exactly as pictured. Great stitching and the colour didn't fade after washing.",
     "Good value for money. Packaging was secure and the item was in perfect condition.",
-    "Works perfectly. Customer support was helpful when I had a question about my order.",
-    "Amazing! Beat my expectations. Recommended for anyone looking for quality at a fair price.",
+    "Super comfortable, wears well. Customer support was helpful when I had a question about sizing.",
+    "Amazing! Beat my expectations. Recommended for anyone looking for quality streetwear at a fair price.",
     "Solid build quality. Already recommended it to three friends and they all ordered too.",
-    "Arrived faster than expected. Very happy with the overall experience.",
-    "Top notch. Used for two weeks now and no issues whatsoever.",
+    "Arrived faster than expected and fits perfectly. Very happy with the overall experience.",
+    "Top notch. Worn it weekly for a month now and it still looks brand new.",
 ]
 
 FIRST_NAMES = ["Brian", "Faith", "Kevin", "Aisha", "Michael", "Grace", "Daniel", "Mercy",
@@ -214,6 +227,19 @@ def pick_image(images: list[Path]) -> Path | None:
     return random.choice(images) if images else None
 
 
+def find_image_by_stem(images: list[Path], stem: str) -> Path | None:
+    """
+    Find an image whose filename (without extension) matches *stem*,
+    case-insensitively — e.g. find_image_by_stem(images, "banner_1")
+    will match "banner_1.png", "Banner_1.jpg", etc.
+    """
+    stem_lower = stem.lower()
+    for p in images:
+        if p.stem.lower() == stem_lower:
+            return p
+    return None
+
+
 def open_image_file(path: Path | None):
     """Return an open Django File object or None."""
     if path is None or not path.exists():
@@ -224,6 +250,13 @@ def open_image_file(path: Path | None):
 def rand_phone():
     prefix = random.choice(["0712", "0722", "0733", "0745", "0756", "0768", "0798"])
     return prefix + "".join(random.choices(string.digits, k=6))
+
+
+def rand_price(category_name: str) -> int:
+    """Pick a randomised price (rounded to the nearest 50) for a category."""
+    low, high = PRICE_RANGES.get(category_name, (1000, 2000))
+    price = random.randint(low, high)
+    return (price // 50) * 50
 
 
 # ─────────────────────────────────────────────────────────────
@@ -242,7 +275,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--image-dir",
             type=str,
-            default=r"D:\gadaf\Documents\Mkurugenzi – Merch_files",
+            default=r"D:\gadaf\Documents\iko_nini_product",
             help="Directory to pull product/banner images from.",
         )
         parser.add_argument("--users",    type=int, default=12, help="Number of demo users to create.")
@@ -380,8 +413,15 @@ class Command(BaseCommand):
             if not category:
                 continue
 
-            for product_name, price, compare_price in items:
+            for product_name in items:
                 brand = random.choice(self.brand_objects)
+
+                price = rand_price(cat_name)
+                # Compare-at price gives a "was" price for a discount badge.
+                markup_pct = random.uniform(0.10, 0.30)
+                compare_price = int(price * (1 + markup_pct))
+                compare_price = (compare_price // 50) * 50
+                cost_price = int(price * 0.55)
 
                 product, created = Product.objects.get_or_create(
                     name=product_name,
@@ -392,12 +432,12 @@ class Command(BaseCommand):
                         "short_description": f"Top-quality {product_name} available now.",
                         "price": Decimal(price),
                         "compare_at_price": Decimal(compare_price),
-                        "cost_price": Decimal(int(price * 0.65)),
-                        "stock": random.randint(5, 120),
+                        "cost_price": Decimal(cost_price),
+                        "stock": random.randint(10, 150),
                         "is_active": True,
                         "is_featured": random.random() < 0.3,
                         "is_flash_sale": random.random() < 0.15,
-                        "weight": Decimal(str(round(random.uniform(0.3, 5.0), 2))),
+                        "weight": Decimal(str(round(random.uniform(0.1, 0.7), 2))),
                     },
                 )
 
@@ -418,48 +458,68 @@ class Command(BaseCommand):
                                 pi.image.save(img_path.name, img_file, save=True)
                                 img_file.file.close()
 
-                    # 0–2 variants (e.g. colours / sizes) for relevant categories
-                    if cat_name in ("Shoes & Sneakers", "Smartphones", "Laptops & Computers"):
-                        colours = ["Black", "White", "Blue", "Silver"]
-                        sizes   = ["S", "M", "L", "XL", "UK 8", "UK 9", "UK 10"]
-                        for _ in range(random.randint(1, 2)):
-                            attr = (
-                                {"size": random.choice(sizes)}
-                                if cat_name == "Shoes & Sneakers"
-                                else {"color": random.choice(colours)}
-                            )
-                            variant_name = list(attr.values())[0]
-                            ProductVariant.objects.get_or_create(
-                                product=product,
-                                name=variant_name,
-                                defaults={
-                                    "price": Decimal(price + random.randint(-500, 2000)),
-                                    "stock": random.randint(2, 30),
-                                    "attributes": attr,
-                                },
-                            )
+                    # Size / colour variants
+                    self._seed_variants_for_product(product, cat_name, price)
 
                 self.all_products.append(product)
 
         self.stdout.write(f"   {Product.objects.count()} products.")
 
     # ──────────────────────────────────────────
+    def _seed_variants_for_product(self, product: Product, cat_name: str, base_price: int):
+        """Create size/colour variants appropriate to the product's category."""
+        if cat_name == "Socks":
+            # Socks: just size variants, no colour split.
+            for size in SOCK_SIZES:
+                ProductVariant.objects.get_or_create(
+                    product=product,
+                    name=size,
+                    defaults={
+                        "price": Decimal(base_price),
+                        "stock": random.randint(10, 60),
+                        "attributes": {"size": size},
+                    },
+                )
+            return
+
+        # All other apparel: pick a small colourway + a spread of sizes.
+        num_colors = random.randint(1, 2)
+        colors = random.sample(COLORS, k=num_colors)
+        num_sizes = random.randint(3, len(CLOTHING_SIZES))
+        sizes = random.sample(CLOTHING_SIZES, k=num_sizes)
+
+        for color in colors:
+            for size in sizes:
+                variant_name = f"{color} / {size}"
+                price_delta = random.choice([0, 0, 0, 100, -100, 200])
+                ProductVariant.objects.get_or_create(
+                    product=product,
+                    name=variant_name,
+                    defaults={
+                        "price": Decimal(max(base_price + price_delta, 100)),
+                        "stock": random.randint(2, 40),
+                        "attributes": {"color": color, "size": size},
+                    },
+                )
+
+    # ──────────────────────────────────────────
     def _seed_banners(self):
         self.stdout.write("🖼  Seeding banners …")
         banner_data = [
-            ("Flash Sale — Up to 60% Off Electronics!", "Limited time. Shop now.", "/shop/electronics/"),
-            ("New Arrivals in Fashion", "Fresh styles just landed.", "/shop/fashion/"),
+            ("New Drop: Hoodie & Sweatpants Sets", "Stay cozy this season. Shop the latest arrivals.", "/shop/hoodies/"),
+            ("Tees & Crop Tops — Up to 30% Off", "Limited time. Mix and match your favourites.", "/shop/t-shirts/"),
             ("Free Delivery to Nairobi Pickup Stations", "On orders above KES 2,000.", "/shop/"),
         ]
-        for idx, (title, subtitle, link) in enumerate(banner_data):
-            img_path = pick_image(self.images)
+        for idx, (title, subtitle, link) in enumerate(banner_data, start=1):
+            # Use banner_1 / banner_2 / banner_3 specifically (any extension).
+            img_path = find_image_by_stem(self.images, f"banner_{idx}") or pick_image(self.images)
             banner, created = Banner.objects.get_or_create(
                 title=title,
                 defaults={
                     "subtitle": subtitle,
                     "link": link,
                     "is_active": True,
-                    "sort_order": idx,
+                    "sort_order": idx - 1,
                 },
             )
             if created and img_path:

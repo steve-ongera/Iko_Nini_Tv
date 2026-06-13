@@ -12,7 +12,6 @@ import Loader from '../components/common/Loader'
 import Breadcrumb from '../components/common/Breadcrumb'
 import toast from 'react-hot-toast'
 
-// same toArray guard used in Sidebar
 const toArray = (data) => {
   if (Array.isArray(data)) return data
   if (data && Array.isArray(data.results)) return data.results
@@ -32,6 +31,7 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState('description')
   const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', body: '' })
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const { addToCart } = useCart()
   const { addToWishlist, isInWishlist, removeFromWishlist, wishlist } = useWishlist()
@@ -63,7 +63,7 @@ const ProductDetail = () => {
   const fetchReviews = async () => {
     try {
       const res = await productsAPI.getReviews(slug)
-      setReviews(toArray(res.data))   // ← fixes "reviews.map is not a function"
+      setReviews(toArray(res.data))
     } catch {
       setReviews([])
     }
@@ -129,22 +129,104 @@ const ProductDetail = () => {
         <meta name="description" content={product.meta_description || product.short_description} />
       </Helmet>
 
+      {/* ── Image lightbox (mobile tap to zoom) ───────────────────────── */}
+      {lightboxOpen && (
+        <>
+          <div
+            onClick={() => setLightboxOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)',
+              zIndex: 'var(--z-modal)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', padding: '1rem',
+            }}
+          >
+            <img
+              src={images[activeImage]?.image}
+              alt={product.name}
+              style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: 'var(--radius)' }}
+            />
+            <button
+              style={{
+                position: 'absolute', top: '1rem', right: '1rem',
+                background: 'rgba(255,255,255,0.15)', border: 'none',
+                color: 'white', borderRadius: '50%', width: '40px', height: '40px',
+                fontSize: '1.25rem', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+            {/* Prev / next on lightbox */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={e => { e.stopPropagation(); setActiveImage(i => (i - 1 + images.length) % images.length) }}
+                  style={{
+                    position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white',
+                    borderRadius: '50%', width: '40px', height: '40px',
+                    fontSize: '1.25rem', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setActiveImage(i => (i + 1) % images.length) }}
+                  style={{
+                    position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white',
+                    borderRadius: '50%', width: '40px', height: '40px',
+                    fontSize: '1.25rem', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <i className="bi bi-chevron-right"></i>
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
       <div className="container">
 
-        {/* Breadcrumb */}
-        <Breadcrumb items={[
-          { label: 'Home', link: '/' },
-          { label: 'Store', link: '/store' },
-          { label: product.category?.name, link: `/store?category=${product.category?.slug}` },
-          { label: product.name },
-        ]} />
+        {/* Breadcrumb — hide on mobile to save space */}
+        <div className="desktop-only">
+          <Breadcrumb items={[
+            { label: 'Home', link: '/' },
+            { label: 'Store', link: '/store' },
+            { label: product.category?.name, link: `/store?category=${product.category?.slug}` },
+            { label: product.name },
+          ]} />
+        </div>
+
+        {/* Mobile back button */}
+        <div className="mobile-only" style={{ padding: '0.75rem 0' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.375rem',
+              fontSize: 'var(--text-sm)', color: 'var(--gray-600)', fontWeight: 500,
+            }}
+          >
+            <i className="bi bi-arrow-left"></i> Back
+          </button>
+        </div>
 
         {/* ── Main layout ─────────────────────────────────────────────── */}
         <div className="product-detail-layout">
 
-          {/* Gallery */}
+          {/* ── Gallery ─────────────────────────────────────────────────── */}
           <div className="product-gallery">
-            <div className="product-gallery-main">
+
+            {/* Main image */}
+            <div
+              className="product-gallery-main"
+              onClick={() => images.length > 0 && setLightboxOpen(true)}
+              style={{ cursor: images.length > 0 ? 'zoom-in' : 'default' }}
+            >
               {images[activeImage] ? (
                 <img
                   src={images[activeImage].image}
@@ -154,20 +236,36 @@ const ProductDetail = () => {
                 <div style={{
                   width: '100%', height: '100%', display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--gray-100)'
+                  background: 'var(--gray-100)',
                 }}>
                   <i className="bi bi-image" style={{ fontSize: '4rem', color: 'var(--gray-300)' }}></i>
                 </div>
               )}
 
               {discountPercent > 0 && (
-                <span className="product-badge product-badge-discount"
-                  style={{ position: 'absolute', top: '1rem', left: '1rem', fontSize: '0.75rem', padding: '0.3em 0.7em' }}>
+                <span className="product-badge product-badge-discount" style={{
+                  position: 'absolute', top: '0.75rem', left: '0.75rem',
+                  fontSize: '0.75rem', padding: '0.3em 0.7em',
+                }}>
                   -{discountPercent}% OFF
                 </span>
               )}
+
+              {/* Zoom hint on desktop */}
+              {images.length > 0 && (
+                <div className="desktop-only" style={{
+                  position: 'absolute', bottom: '0.75rem', right: '0.75rem',
+                  background: 'rgba(0,0,0,0.45)', color: 'white',
+                  fontSize: 'var(--text-xs)', padding: '0.25rem 0.625rem',
+                  borderRadius: 'var(--radius-full)', display: 'flex',
+                  alignItems: 'center', gap: '0.25rem',
+                }}>
+                  <i className="bi bi-zoom-in"></i> Click to zoom
+                </div>
+              )}
             </div>
 
+            {/* Thumbnails — horizontal scroll on mobile */}
             {images.length > 1 && (
               <div className="product-gallery-thumbs">
                 {images.map((img, idx) => (
@@ -181,25 +279,45 @@ const ProductDetail = () => {
                 ))}
               </div>
             )}
+
+            {/* Mobile dot indicators */}
+            {images.length > 1 && (
+              <div className="mobile-only hero-dots" style={{ position: 'static', transform: 'none', marginTop: '0.5rem' }}>
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`hero-dot ${activeImage === idx ? 'active' : ''}`}
+                    onClick={() => setActiveImage(idx)}
+                    style={{ background: activeImage === idx ? 'var(--brand-red)' : 'var(--gray-300)' }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Info panel */}
+          {/* ── Info panel ──────────────────────────────────────────────── */}
           <div>
-            {/* Brand + title */}
+
+            {/* Brand */}
             {product.brand && (
               <div className="product-info-brand">
                 <Link to={`/store?brand=${product.brand.slug}`}>{product.brand.name}</Link>
               </div>
             )}
-            <h1 className="product-info-title">{product.name}</h1>
+
+            <h1 className="product-info-title" style={{ fontSize: 'clamp(1.25rem, 4vw, var(--text-2xl))' }}>
+              {product.name}
+            </h1>
 
             {/* Rating */}
             <div className="product-info-rating">
               <RatingStars rating={product.average_rating || 0} reviewCount={product.review_count || 0} />
               <button
                 onClick={() => setActiveTab('reviews')}
-                style={{ background: 'none', border: 'none', fontSize: 'var(--text-sm)',
-                  color: 'var(--brand-red)', cursor: 'pointer', fontWeight: 600 }}
+                style={{
+                  background: 'none', border: 'none', fontSize: 'var(--text-sm)',
+                  color: 'var(--brand-red)', cursor: 'pointer', fontWeight: 600,
+                }}
               >
                 Write a review
               </button>
@@ -207,8 +325,8 @@ const ProductDetail = () => {
 
             {/* Pricing */}
             <div className="product-info-pricing">
-              <div className="product-info-price-row">
-                <span className="product-info-price">
+              <div className="product-info-price-row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span className="product-info-price" style={{ fontSize: 'clamp(1.5rem, 5vw, var(--text-4xl))' }}>
                   KSh {Number(currentPrice).toLocaleString()}
                 </span>
                 {product.compare_at_price && Number(product.compare_at_price) > Number(currentPrice) && (
@@ -223,7 +341,9 @@ const ProductDetail = () => {
             </div>
 
             {/* Stock */}
-            <div className={`product-info-stock ${product.in_stock ? (product.stock < 10 ? 'low-stock' : 'in-stock') : 'out-stock'}`}>
+            <div className={`product-info-stock ${product.in_stock
+              ? (product.stock < 10 ? 'low-stock' : 'in-stock')
+              : 'out-stock'}`}>
               <i className={`bi ${product.in_stock ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}`}></i>
               {product.in_stock
                 ? product.track_stock && product.stock < 10
@@ -237,9 +357,13 @@ const ProductDetail = () => {
               <div className="variant-group">
                 <div className="variant-group-label">
                   Select Variant
-                  {selectedVariant && <span style={{ color: 'var(--brand-red)', marginLeft: '0.5rem' }}>— {selectedVariant.name}</span>}
+                  {selectedVariant && (
+                    <span style={{ color: 'var(--brand-red)', marginLeft: '0.5rem' }}>
+                      — {selectedVariant.name}
+                    </span>
+                  )}
                 </div>
-                <div className="variant-options">
+                <div className="variant-options" style={{ flexWrap: 'wrap' }}>
                   {product.variants.map(v => (
                     <div
                       key={v.id}
@@ -261,13 +385,21 @@ const ProductDetail = () => {
             {/* Quantity */}
             <div className="variant-group">
               <div className="variant-group-label">Quantity</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <div className="quantity-stepper">
-                  <button className="quantity-btn" onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={!product.in_stock}>
+                  <button
+                    className="quantity-btn"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={!product.in_stock}
+                  >
                     <i className="bi bi-dash"></i>
                   </button>
                   <input className="quantity-value" readOnly value={quantity} />
-                  <button className="quantity-btn" onClick={() => setQuantity(q => q + 1)} disabled={!product.in_stock}>
+                  <button
+                    className="quantity-btn"
+                    onClick={() => setQuantity(q => q + 1)}
+                    disabled={!product.in_stock}
+                  >
                     <i className="bi bi-plus"></i>
                   </button>
                 </div>
@@ -279,21 +411,22 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* CTA */}
-            <div className="product-cta-row">
+            {/* CTA — full width on mobile */}
+            <div className="product-cta-row" style={{ flexWrap: 'wrap' }}>
               <button
                 className="btn btn-primary btn-lg"
                 onClick={handleAddToCart}
                 disabled={!product.in_stock}
+                style={{ flex: '1 1 200px' }}
               >
                 <i className="bi bi-cart-plus"></i>
                 {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
               </button>
               <button
-                className={`btn btn-lg product-cta-wishlist ${isWishlisted ? 'btn-danger' : 'btn-outline-primary'}`}
+                className={`btn btn-lg ${isWishlisted ? 'btn-danger' : 'btn-outline-primary'}`}
                 onClick={handleWishlist}
                 aria-label="Wishlist"
-                style={{ width: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               >
                 <i className={`bi ${isWishlisted ? 'bi-heart-fill' : 'bi-heart'}`}></i>
               </button>
@@ -309,49 +442,46 @@ const ProductDetail = () => {
 
             {/* Delivery info */}
             <div className="delivery-info-card">
-              <div className="delivery-info-row">
-                <i className="bi bi-truck delivery-info-icon"></i>
-                <div className="delivery-info-text">
-                  <h6>Fast Delivery</h6>
-                  <p>Nairobi: 1–2 days · Rest of Kenya: 3–5 days</p>
+              {[
+                { icon: 'bi-truck', title: 'Fast Delivery', desc: 'Nairobi: 1–2 days · Rest of Kenya: 3–5 days' },
+                { icon: 'bi-shield-check', title: 'Secure Payment', desc: 'M-Pesa, PayPal, Visa & Mastercard accepted' },
+                { icon: 'bi-arrow-counterclockwise', title: '7-Day Returns', desc: 'Not satisfied? Return it within 7 days' },
+              ].map(row => (
+                <div className="delivery-info-row" key={row.title}>
+                  <i className={`bi ${row.icon} delivery-info-icon`}></i>
+                  <div className="delivery-info-text">
+                    <h6>{row.title}</h6>
+                    <p>{row.desc}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="delivery-info-row">
-                <i className="bi bi-shield-check delivery-info-icon"></i>
-                <div className="delivery-info-text">
-                  <h6>Secure Payment</h6>
-                  <p>M-Pesa, PayPal, Visa & Mastercard accepted</p>
-                </div>
-              </div>
-              <div className="delivery-info-row">
-                <i className="bi bi-arrow-counterclockwise delivery-info-icon"></i>
-                <div className="delivery-info-text">
-                  <h6>7-Day Returns</h6>
-                  <p>Not satisfied? Return it within 7 days</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* ── Tabs ────────────────────────────────────────────────────── */}
-        <div style={{ marginTop: '2.5rem' }}>
+        <div style={{ marginTop: '2rem' }}>
 
-          {/* Tab headers */}
+          {/* Tab headers — scroll horizontally on mobile */}
           <div style={{
-            display: 'flex', borderBottom: '2px solid var(--gray-150)',
-            gap: 0, marginBottom: '1.5rem'
+            display: 'flex',
+            borderBottom: '2px solid var(--gray-150)',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            marginBottom: '1.5rem',
+            gap: 0,
           }}>
             {[
-              { key: 'description', label: 'Description' },
+              { key: 'description',    label: 'Description' },
               { key: 'specifications', label: 'Specifications' },
-              { key: 'reviews', label: `Reviews (${product.review_count || reviews.length || 0})` },
+              { key: 'reviews',        label: `Reviews (${product.review_count || reviews.length || 0})` },
             ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: '0.75rem 1.5rem',
+                  padding: '0.75rem 1.25rem',
                   background: 'none',
                   border: 'none',
                   borderBottom: activeTab === tab.key ? '2px solid var(--brand-red)' : '2px solid transparent',
@@ -362,6 +492,8 @@ const ProductDetail = () => {
                   fontSize: 'var(--text-sm)',
                   transition: 'var(--transition-fast)',
                   fontFamily: 'var(--font-display)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {tab.label}
@@ -381,22 +513,23 @@ const ProductDetail = () => {
           {activeTab === 'specifications' && (
             <div style={{
               background: 'white', borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--gray-150)', overflow: 'hidden'
+              border: '1px solid var(--gray-150)', overflow: 'hidden',
             }}>
               {[
-                { label: 'SKU', value: product.sku },
+                { label: 'SKU',      value: product.sku },
                 { label: 'Category', value: product.category?.name },
-                { label: 'Brand', value: product.brand?.name },
+                { label: 'Brand',    value: product.brand?.name },
                 product.weight && { label: 'Weight', value: `${product.weight} kg` },
               ].filter(Boolean).map((row, i) => (
                 <div key={i} style={{
-                  display: 'grid', gridTemplateColumns: '160px 1fr',
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(100px, 160px) 1fr',  // shrinks on mobile
                   borderBottom: '1px solid var(--gray-100)',
                   fontSize: 'var(--text-sm)',
                 }}>
                   <div style={{
                     padding: '0.75rem 1rem', fontWeight: 600,
-                    color: 'var(--gray-700)', background: 'var(--gray-50)'
+                    color: 'var(--gray-700)', background: 'var(--gray-50)',
                   }}>{row.label}</div>
                   <div style={{ padding: '0.75rem 1rem', color: 'var(--gray-800)' }}>{row.value || '—'}</div>
                 </div>
@@ -407,7 +540,6 @@ const ProductDetail = () => {
           {/* Reviews */}
           {activeTab === 'reviews' && (
             <div>
-              {/* List */}
               {reviews.length > 0 ? (
                 <div style={{ marginBottom: '2rem' }}>
                   {reviews.map(review => (
@@ -420,22 +552,19 @@ const ProductDetail = () => {
                     <i className="bi bi-chat-square-text"></i>
                   </div>
                   <div className="empty-state-title" style={{ fontSize: 'var(--text-lg)' }}>No reviews yet</div>
-                  <div className="empty-state-desc">Be the first to share your experience with this product.</div>
+                  <div className="empty-state-desc">Be the first to share your experience.</div>
                 </div>
               )}
 
-              {/* Review form */}
               {isAuthenticated ? (
                 <div style={{
                   background: 'white', border: '1px solid var(--gray-150)',
-                  borderRadius: 'var(--radius-xl)', padding: '1.5rem'
+                  borderRadius: 'var(--radius-xl)', padding: 'clamp(1rem, 4vw, 1.5rem)',
                 }}>
                   <h5 style={{ fontFamily: 'var(--font-display)', marginBottom: '1.25rem' }}>
                     Write a Review
                   </h5>
                   <form onSubmit={handleSubmitReview}>
-
-                    {/* Star picker */}
                     <div className="form-group">
                       <label className="form-label">Your Rating</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -448,7 +577,10 @@ const ProductDetail = () => {
                           >
                             <i
                               className={`bi ${reviewForm.rating >= star ? 'bi-star-fill' : 'bi-star'}`}
-                              style={{ fontSize: '1.5rem', color: reviewForm.rating >= star ? 'var(--color-warning)' : 'var(--gray-300)' }}
+                              style={{
+                                fontSize: 'clamp(1.25rem, 5vw, 1.5rem)',
+                                color: reviewForm.rating >= star ? 'var(--color-warning)' : 'var(--gray-300)',
+                              }}
                             ></i>
                           </button>
                         ))}
@@ -485,7 +617,7 @@ const ProductDetail = () => {
 
                     <button
                       type="submit"
-                      className={`btn btn-primary ${submittingReview ? 'loading' : ''}`}
+                      className={`btn btn-primary btn-block ${submittingReview ? 'loading' : ''}`}
                       disabled={submittingReview}
                     >
                       {submittingReview ? 'Submitting…' : 'Submit Review'}
@@ -518,6 +650,30 @@ const ProductDetail = () => {
           </div>
         )}
 
+      </div>
+
+      {/* ── Mobile sticky CTA ────────────────────────────────────────── */}
+      <div className="sticky-cta">
+        <div style={{ display: 'flex', gap: '0.625rem' }}>
+          <button
+            className="btn btn-primary btn-lg"
+            onClick={handleAddToCart}
+            disabled={!product.in_stock}
+            style={{ flex: 1 }}
+          >
+            <i className="bi bi-cart-plus"></i>
+            {product.in_stock
+              ? `Add to Cart — KSh ${Number(currentPrice).toLocaleString()}`
+              : 'Out of Stock'}
+          </button>
+          <button
+            className={`btn btn-lg ${isWishlisted ? 'btn-danger' : 'btn-outline-primary'}`}
+            onClick={handleWishlist}
+            style={{ width: '48px', padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <i className={`bi ${isWishlisted ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+          </button>
+        </div>
       </div>
     </>
   )
