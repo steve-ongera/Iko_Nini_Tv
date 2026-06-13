@@ -154,7 +154,8 @@ const Index = () => {
           productsAPI.flashSales(),
           bannersAPI.list(),
           productsAPI.list({ is_new: true,      page_size: 10, ordering: '-created_at' }),
-          productsAPI.list({ ordering: '-average_rating', page_size: 10 }),
+          // Change this line in fetchData phase 1:
+          productsAPI.list({ ordering: '-avg_rating', page_size: 10 }),   
           categoriesAPI.list(),
           brandsAPI.list(),
         ])
