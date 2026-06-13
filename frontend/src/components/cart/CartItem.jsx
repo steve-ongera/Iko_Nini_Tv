@@ -4,70 +4,102 @@ import { Link } from 'react-router-dom'
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   const product = item.product
   const imageUrl = product?.primary_image
-  
+
   const handleQuantityChange = (newQuantity) => {
-    if (newQuantity < 1) {
-      onRemove()
-    } else {
-      onUpdateQuantity(newQuantity)
-    }
+    if (newQuantity < 1) onRemove()
+    else onUpdateQuantity(newQuantity)
   }
 
   return (
     <div className="cart-item">
-      <Link to={`/product/${product.slug}`} className="cart-item-image-link">
-        {imageUrl ? (
-          <img src={imageUrl} alt={product.name} className="cart-item-image" />
-        ) : (
-          <div className="cart-item-image bg-light d-flex align-items-center justify-content-center">
-            <i className="bi bi-image text-muted" style={{ fontSize: '2rem' }}></i>
-          </div>
-        )}
-      </Link>
-      
+
+      {/* Image */}
+      <div className="cart-item-image">
+        <Link to={`/product/${product.slug}`}>
+          {imageUrl ? (
+            <img src={imageUrl} alt={product.name} />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--gray-100)'
+            }}>
+              <i className="bi bi-image" style={{ fontSize: '1.75rem', color: 'var(--gray-300)' }}></i>
+            </div>
+          )}
+        </Link>
+      </div>
+
+      {/* Details */}
       <div className="cart-item-details">
-        <div className="d-flex justify-content-between align-items-start">
+
+        {/* Title + remove */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
           <div>
-            <Link to={`/product/${product.slug}`} className="text-decoration-none text-dark">
-              <h6 className="cart-item-title">{product.name}</h6>
+            <Link to={`/product/${product.slug}`} className="cart-item-title">
+              {product.name}
             </Link>
             {item.variant && (
-              <small className="text-muted">Variant: {item.variant.name}</small>
+              <div className="cart-item-variant">
+                <i className="bi bi-tag" style={{ marginRight: '0.25rem' }}></i>
+                {item.variant.name}
+              </div>
+            )}
+            {product.brand && (
+              <div className="cart-item-variant">{product.brand}</div>
             )}
           </div>
-          <button onClick={onRemove} className="btn btn-link text-danger p-0">
-            <i className="bi bi-trash"></i>
+
+          <button
+            onClick={onRemove}
+            className="cart-item-remove"
+            aria-label="Remove item"
+          >
+            <i className="bi bi-trash3"></i> Remove
           </button>
         </div>
-        
-        <div className="d-flex justify-content-between align-items-center mt-2">
-          <div className="cart-item-quantity">
-            <button 
+
+        {/* Quantity + price row */}
+        <div className="cart-item-actions">
+          <div className="quantity-stepper">
+            <button
               className="quantity-btn"
               onClick={() => handleQuantityChange(item.quantity - 1)}
+              aria-label="Decrease quantity"
             >
-              -
+              <i className="bi bi-dash"></i>
             </button>
-            <span className="mx-2">{item.quantity}</span>
-            <button 
+            <input
+              className="quantity-value"
+              readOnly
+              value={item.quantity}
+            />
+            <button
               className="quantity-btn"
               onClick={() => handleQuantityChange(item.quantity + 1)}
+              aria-label="Increase quantity"
             >
-              +
+              <i className="bi bi-plus"></i>
             </button>
           </div>
-          
-          <div className="text-end">
-            <span className="cart-item-price">
-              KSh {Number(item.unit_price).toLocaleString()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--gray-400)' }}>
+              KSh {Number(item.unit_price).toLocaleString()} each
             </span>
             {item.quantity > 1 && (
-              <small className="text-muted d-block">
-                Total: KSh {Number(item.subtotal).toLocaleString()}
-              </small>
+              <span className="cart-item-price">
+                KSh {Number(item.subtotal || item.unit_price * item.quantity).toLocaleString()}
+              </span>
+            )}
+            {item.quantity === 1 && (
+              <span className="cart-item-price">
+                KSh {Number(item.unit_price).toLocaleString()}
+              </span>
             )}
           </div>
         </div>
+
       </div>
     </div>
   )

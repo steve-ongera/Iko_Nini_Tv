@@ -7,10 +7,14 @@ const WishlistContext = createContext()
 
 export const useWishlist = () => {
   const context = useContext(WishlistContext)
-  if (!context) {
-    throw new Error('useWishlist must be used within WishlistProvider')
-  }
+  if (!context) throw new Error('useWishlist must be used within WishlistProvider')
   return context
+}
+
+const toArray = (data) => {
+  if (Array.isArray(data)) return data
+  if (data && Array.isArray(data.results)) return data.results
+  return []
 }
 
 export const WishlistProvider = ({ children }) => {
@@ -23,13 +27,13 @@ export const WishlistProvider = ({ children }) => {
       setWishlist([])
       return
     }
-    
     setLoading(true)
     try {
       const response = await wishlistAPI.list()
-      setWishlist(response.data)
+      setWishlist(toArray(response.data))   // ← the fix
     } catch (error) {
       console.error('Failed to fetch wishlist:', error)
+      setWishlist([])
     } finally {
       setLoading(false)
     }
@@ -44,10 +48,9 @@ export const WishlistProvider = ({ children }) => {
       toast.error('Please login to add to wishlist')
       return { success: false }
     }
-    
     try {
       const response = await wishlistAPI.add(productId)
-      setWishlist([response.data, ...wishlist])
+      setWishlist(prev => [response.data, ...prev])
       toast.success('Added to wishlist')
       return { success: true, data: response.data }
     } catch (error) {
@@ -63,7 +66,7 @@ export const WishlistProvider = ({ children }) => {
   const removeFromWishlist = async (id) => {
     try {
       await wishlistAPI.remove(id)
-      setWishlist(wishlist.filter(item => item.id !== id))
+      setWishlist(prev => prev.filter(item => item.id !== id))
       toast.success('Removed from wishlist')
       return { success: true }
     } catch (error) {
@@ -73,17 +76,15 @@ export const WishlistProvider = ({ children }) => {
   }
 
   const isInWishlist = (productId) => {
-    return wishlist.some(item => item.product.id === productId)
+    if (!Array.isArray(wishlist)) return false   // ← safety guard
+    return wishlist.some(item =>
+      item.product?.id === productId || item.product === productId
+    )
   }
 
-  const value = {
-    wishlist,
-    loading,
-    fetchWishlist,
-    addToWishlist,
-    removeFromWishlist,
-    isInWishlist,
-  }
-
-  return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
+  return (
+    <WishlistContext.Provider value={{ wishlist, loading, fetchWishlist, addToWishlist, removeFromWishlist, isInWishlist }}>
+      {children}
+    </WishlistContext.Provider>
+  )
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { useAuth } from '../../context/AuthContext'
@@ -8,110 +8,134 @@ import toast from 'react-hot-toast'
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart()
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist()
+  const { addToWishlist, isInWishlist, removeFromWishlist, wishlist } = useWishlist()
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  const discountPercent = product.discount_percent || 0
+  const isInWish = isInWishlist ? isInWishlist(product.id) : false
+
+  const handleAddToCart = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!product.in_stock) return
+    addToCart(product.id, null, 1)
+    toast.success('Added to cart')
+  }
 
   const handleWishlistClick = async (e) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (!isAuthenticated) {
-      toast.error('Please login to add to wishlist')
+      toast.error('Please login to save items')
+      navigate('/login')
       return
     }
-    
-    if (isInWishlist(product.id)) {
-      // Find wishlist item ID
-      const wishlistItem = await fetchWishlistItemId(product.id)
-      if (wishlistItem) {
-        await removeFromWishlist(wishlistItem.id)
-      }
+
+    if (isInWish) {
+      const item = wishlist.find(w => w.product?.id === product.id || w.product === product.id)
+      if (item) await removeFromWishlist(item.id)
     } else {
       await addToWishlist(product.id)
     }
   }
 
-  const fetchWishlistItemId = async (productId) => {
-    // This would need access to wishlist state
-    // For now, we'll implement through context
-    return null
-  }
-
-  const discountPercent = product.discount_percent || 0
-  const isInWish = isInWishlist ? isInWishlist(product.id) : false
-
   return (
-    <div className="card h-100 product-card">
-      <Link to={`/product/${product.slug}`} className="text-decoration-none">
-        <div className="card-image">
-          {product.primary_image ? (
-            <img src={product.primary_image} alt={product.name} loading="lazy" />
-          ) : (
-            <div className="d-flex align-items-center justify-content-center h-100 bg-light">
-              <i className="bi bi-image text-muted" style={{ fontSize: '3rem' }}></i>
-            </div>
-          )}
-          
-          {discountPercent > 0 && (
-            <span className="position-absolute top-0 start-0 m-2 bg-danger text-white px-2 py-1 rounded small">
-              -{discountPercent}%
-            </span>
-          )}
-          
-          {product.is_flash_sale && (
-            <span className="position-absolute top-0 end-0 m-2 bg-warning text-dark px-2 py-1 rounded small">
-              Flash Sale
-            </span>
-          )}
-        </div>
-        
-        <div className="card-body">
-          <div className="text-muted small mb-1">
-            {product.category_name || 'Uncategorized'}
+    <Link to={`/product/${product.slug}`} className="product-card" style={{ textDecoration: 'none' }}>
+
+      {/* Image */}
+      <div className="product-card-image">
+        {product.primary_image ? (
+          <img src={product.primary_image} alt={product.name} loading="lazy" />
+        ) : (
+          <div style={{
+            width: '100%', height: '100%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--gray-100)'
+          }}>
+            <i className="bi bi-image" style={{ fontSize: '2.5rem', color: 'var(--gray-300)' }}></i>
           </div>
-          
-          <h6 className="card-title">{product.name}</h6>
-          
-          <div className="mb-2">
-            <RatingStars rating={product.average_rating || 0} reviewCount={product.review_count || 0} size="small" />
-          </div>
-          
-          <div className="d-flex align-items-center justify-content-between mt-2">
-            <div>
-              <span className="card-price">KSh {Number(product.price).toLocaleString()}</span>
-              {product.compare_at_price && (
-                <span className="card-old-price">
-                  KSh {Number(product.compare_at_price).toLocaleString()}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          {!product.in_stock && (
-            <div className="text-danger small mt-1">Out of Stock</div>
-          )}
-        </div>
-      </Link>
-      
-      <div className="card-footer bg-transparent border-0 pb-3 pt-0">
-        <div className="d-flex gap-2">
-          <button
-            onClick={() => addToCart(product.id, null, 1)}
-            className="btn btn-primary flex-grow-1"
-            disabled={!product.in_stock}
-          >
-            <i className="bi bi-cart-plus"></i> Add to Cart
-          </button>
-          
-          <button
-            onClick={handleWishlistClick}
-            className="btn btn-outline-danger"
-          >
-            <i className={`bi ${isInWish ? 'bi-heart-fill' : 'bi-heart'}`}></i>
-          </button>
+        )}
+
+        {/* Badges */}
+        {discountPercent > 0 && (
+          <span className="product-badge product-badge-discount">-{discountPercent}%</span>
+        )}
+        {product.is_flash_sale && !discountPercent && (
+          <span className="product-badge product-badge-flash">Flash</span>
+        )}
+        {product.is_new && !product.is_flash_sale && !discountPercent && (
+          <span className="product-badge product-badge-new">New</span>
+        )}
+
+        {/* Wishlist button */}
+        <button
+          className={`product-card-wishlist ${isInWish ? 'active' : ''}`}
+          onClick={handleWishlistClick}
+          aria-label={isInWish ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <i className={`bi ${isInWish ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+        </button>
+
+        {/* Quick add overlay */}
+        <div className="product-card-quick-add" onClick={handleAddToCart}>
+          <i className="bi bi-cart-plus"></i>
+          {product.in_stock ? 'Quick Add' : 'Out of Stock'}
         </div>
       </div>
-    </div>
+
+      {/* Body */}
+      <div className="product-card-body">
+        {product.brand && (
+          <div className="product-card-brand">{product.brand}</div>
+        )}
+
+        <div className="product-card-title">{product.name}</div>
+
+        {/* Rating */}
+        {(product.average_rating > 0 || product.review_count > 0) && (
+          <div className="product-card-rating">
+            <RatingStars rating={product.average_rating || 0} size="small" />
+            <span className="rating-count">({product.review_count || 0})</span>
+          </div>
+        )}
+
+        {/* Pricing */}
+        <div className="product-card-pricing">
+          <span className="product-card-price">
+            KSh {Number(product.price).toLocaleString()}
+          </span>
+          {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
+            <span className="product-card-old-price">
+              KSh {Number(product.compare_at_price).toLocaleString()}
+            </span>
+          )}
+          {discountPercent > 0 && (
+            <span className="product-card-discount-pill">-{discountPercent}%</span>
+          )}
+        </div>
+
+        {/* Stock status */}
+        {!product.in_stock && (
+          <span className="badge badge-danger" style={{ fontSize: 'var(--text-xs)' }}>
+            Out of Stock
+          </span>
+        )}
+
+        {/* CTA */}
+        <button
+          className="product-card-cta"
+          onClick={handleAddToCart}
+          disabled={!product.in_stock}
+          aria-label="Add to cart"
+        >
+          <i className="bi bi-cart-plus"></i>
+          {product.in_stock ? 'Add to Cart' : 'Unavailable'}
+        </button>
+      </div>
+
+    </Link>
   )
 }
 
