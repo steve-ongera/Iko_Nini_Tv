@@ -3028,6 +3028,22 @@ select.form-control {
 .product-gallery {
   position: sticky;
   top: calc(var(--total-nav-height) + 1rem);
+  align-self: flex-start;          /* ← this is the actual fix */
+  max-height: calc(100vh - var(--total-nav-height) - 2rem);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.product-gallery::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .product-gallery {
+    position: static;              /* no sticky on mobile */
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .product-gallery-main {
