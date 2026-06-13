@@ -14,6 +14,10 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
+admin.site.site_header = "Iko Nini TV"
+admin.site.site_title = "Iko Nini TV Admin"
+admin.site.index_title = "Welcome to Iko Nini TV Dashboard"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls', namespace='core')),
