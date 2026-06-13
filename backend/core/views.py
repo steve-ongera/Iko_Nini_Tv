@@ -240,15 +240,22 @@ class BrandListView(generics.ListAPIView):
 
 class ProductListView(generics.ListAPIView):
     """List products with filtering, searching, sorting"""
-    queryset = Product.objects.filter(is_active=True).select_related('category', 'brand')
     serializer_class = ProductListSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ['name', 'description', 'sku', 'brand__name']
-    ordering_fields = ['price', '-price', 'created_at', '-created_at', 'sold_count', 'average_rating']
+    ordering_fields = ['price', 'created_at', 'sold_count', 'avg_rating']  # use avg_rating not average_rating
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        return (
+            Product.objects
+            .filter(is_active=True)
+            .select_related('category', 'brand')
+            .annotate(avg_rating=Avg('reviews__rating'))  # ← makes it a real DB column
+        )
 
 
 class FeaturedProductsView(generics.ListAPIView):
